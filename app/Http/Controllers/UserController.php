@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\UserRequest;
+use App\Models\Contrato;
+use App\Models\Menu;
 use App\Models\User;
 use App\Models\Persona;
 use Illuminate\Http\Request;
@@ -10,6 +12,8 @@ use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 
 class UserController extends Controller
 {
@@ -30,10 +34,19 @@ class UserController extends Controller
                 'direccion' => $user->persona->direccion,
                 'role_id' => $user->roles->first()->id,
                 'name_role' => $user->roles->first()->name,
+                'activo' => $user->persona->activo
             ];
         });
 
-        return response()->json($transformedUsers);
+        // Convierte el array en una colección
+        $coleccion = Collection::make($transformedUsers);
+
+        // Filtra los elementos con la propiedad "activo" en true
+        $resultado = $coleccion->filter(function ($elemento) {
+            return $elemento['activo'] == true;
+        });
+
+        return response()->json($resultado);
     }
 
     public function store(UserRequest $request)
@@ -163,4 +176,75 @@ class UserController extends Controller
 
         return $response;
     }
+
+
+    public function eliminarUsuario($id)
+    {
+        // Buscar el usuario por su ID
+        $usuario = User::findOrFail($id);
+
+        // Desactivar la persona asociada
+        $persona = Persona::find($usuario->persona_id);
+        if ($persona) {
+            $persona->activo = false;
+            $persona->save();
+        }
+
+        // Desactivar el contrato asociado (si existe)
+        $contrato = Contrato::where('user_id', $usuario->id)->first();
+        if ($contrato) {
+            $contrato->estado = false;
+            $contrato->save();
+        }
+
+        return response()->json(['message' => 'Usuario eliminado exitosamente.']);
+    }
+
+    public function getUserMenusAndPermissions($id)
+    {
+        $user = User::findOrFail($id);
+
+        $userRoles = $user->roles()->with('permissions')->first();
+        $menuPermissions = collect($userRoles['permissions'])->pluck('name')->toArray();
+
+        $menus = Menu::with('children')->whereNull('parent_id')->get();
+        $menuData = $this->buildMenuData($menus);
+
+        return response()->json([
+            'rol' => [
+                'id' => $userRoles->id,
+                'name'=> $userRoles->name
+            ],
+            'permisos' => $menuPermissions,
+            'menus' => $menuData
+        ], 200);
+    }
+
+    private function buildMenuData($menus)
+    {
+        $menuData = [];
+
+        foreach ($menus as $menu) {
+            $menuInfo = [
+                'id' => $menu->id,
+                'title' => $menu->title,
+                'url' => $menu->url,
+                'icon' => $menu->icon,
+                'permissions' => $menu->permissions->map(function ($menuPermission) {
+                    $permission = $menuPermission->permission;
+                    return ['id' => $permission->id, 'name' => $permission->name];
+                }),
+            ];
+
+            // Recursivamente obtener los submenús y sus permisos
+            if ($menu->children->isNotEmpty()) {
+                $menuInfo['children'] = $this->buildMenuData($menu->children);
+            }
+
+            $menuData[] = $menuInfo;
+        }
+
+        return $menuData;
+    }
+   
 }

@@ -49,4 +49,9 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Persona::class);
     }
+
+    public function contrato()
+    {
+        return $this->hasOne(Contrato::class);
+    }
 }

@@ -15,21 +15,18 @@ class RolesTableSeeder extends Seeder
     public function run(): void
     {
         $adminRole = Role::create(['name' => 'administrador']);
-        $userRole = Role::create(['name' => 'usuario']);
+        $operatorRole = Role::create(['name' => 'operador']);
 
-        $permissions = Permission::all();
+        $permissionsAdmin = Permission::all();
 
-        $adminRole->syncPermissions($permissions);
-        $exepcionesUser = [
-            'listar usuarios',
-            'crear usuarios',
-            'editar usuarios',
-            'eliminar usuarios',
-            'eliminar clientes'
+        $adminRole->syncPermissions($permissionsAdmin);
+        
+        $operadorPermissions = [
+            'listar_clientes', 'crear clientes', 'editar_clientes', 'eliminar_clientes',
+            'cobrar_garita',
+            'listar_arriendos', 'registrar_arriendos', 'eliminar_arriendos', 'listar_pagos', 'registrar_pago', 'notificar_pago',
         ];
-        
-        $per_user = $permissions->except($exepcionesUser);
-        
-        $userRole->syncPermissions($per_user);
+        $permissionsOperator = Permission::whereIn('name', $operadorPermissions)->get();
+        $operatorRole->syncPermissions($permissionsOperator);        
     }
 }

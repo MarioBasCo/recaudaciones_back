@@ -10,6 +10,13 @@ class MenuController extends Controller
     public function index()
     {
         $menus = Menu::with('children')->whereNull('parent_id')->get();
+        $menus->makeHidden(['created_at', 'updated_at']);
+
+        // Ocultar los timestamps en los submenús
+        foreach ($menus as $menu) {
+            $menu->children->makeHidden(['created_at', 'updated_at']);
+        }
+
         return response()->json($menus);
     }
 

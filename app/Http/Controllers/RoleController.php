@@ -28,6 +28,28 @@ class RoleController extends Controller
         }
     }
 
+    public function roleByUser($userId)
+    {
+        try {
+            // Buscar al usuario por su ID
+            $user = User::findOrFail($userId);
+
+            // Obtener el rol del usuario
+            $role = $user->roles->first();
+
+            // Comprobar si se encontró un rol
+            if ($role) {
+                $response = $this->generateResponse(true, 'Existen datos', $role);
+            } else {
+                $response = $this->generateResponse(false, 'El usuario no tiene un rol asignado.');
+            }
+
+            return response()->json($response);
+        } catch (\Throwable $th) {
+            return response()->json($this->generateResponse(false, $th->getMessage()), 500);
+        }
+    }
+
     public function store(Request $request)
     {
         try {

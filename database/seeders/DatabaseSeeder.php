@@ -13,19 +13,12 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            PermissionsTableSeeder::class,
+            MenusTableSeeder::class,
             RolesTableSeeder::class,
             UsersSeeder::class,
             TipoVehiculosSeeder::class,
             ClientesSeeder::class,
             LocalesTableSeeder::class
         ]);
-
-        // \App\Models\User::factory(10)->create();
-
-        // \App\Models\User::factory()->create([
-        //     'name' => 'Test User',
-        //     'email' => 'test@example.com',
-        // ]);
     }
 }

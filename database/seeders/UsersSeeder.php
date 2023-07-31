@@ -15,9 +15,11 @@ class UsersSeeder extends Seeder
     public function run(): void
     {
         $persona = Persona::create([
-            'identificacion' => '2450668966',
+            'identificacion' => '2400337651',
             'apellidos' => 'Suarez Ricardo',
-            'nombres' => 'Cindy'
+            'nombres' => 'Cindy',
+            'celular' => '0968772698',
+            'direccion' => 'Anconcito'
             // Otros campos de la persona
         ]);
 

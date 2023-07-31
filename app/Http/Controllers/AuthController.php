@@ -25,8 +25,18 @@ class AuthController extends Controller
             $usuario = Auth::user();
             $tokenResult = $usuario->createToken("API TOKEN")->plainTextToken;
 
+            $dataUser = [
+                'id' => $usuario->id,
+                'email' => $usuario->email,
+                'name' => $usuario->name,
+                'persona' =>$usuario->persona_id,
+                'role_id' => $usuario->roles->first()->id,
+            ];
+
+            
             $data   = [
-                'usuario'  => $usuario,
+                'usuario'  => $dataUser,
+                //'rol' => $usuario->roles->first(),
                 'token'    => $tokenResult,
             ];
 

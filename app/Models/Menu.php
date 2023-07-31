@@ -9,6 +9,11 @@ class Menu extends Model
 {
     use HasFactory;
 
+    public function permissions()
+    {
+        return $this->hasMany(MenuPermission::class, 'menu_id');
+    }
+
     public function children()
     {
         return $this->hasMany(Menu::class, 'parent_id');

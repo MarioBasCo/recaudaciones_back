@@ -36,8 +36,8 @@ class CobroController extends Controller
             $cobro->idVehiculo = $request->idVehiculo;
             $cobro->valor = $request->valor;
             $cobro->turno_id = $request->turno_id;
-            $cobro->fecha = $currentDateTime->toDateString();;
-            $cobro->hora = $currentDateTime->toTimeString();;
+            $cobro->fecha = $currentDateTime->toDateString();
+            $cobro->hora = $currentDateTime->toTimeString();
             $cobro->save();
 
             DB::commit();
@@ -60,18 +60,34 @@ class CobroController extends Controller
             ->selectRaw('tipo_vehiculos.id, tipo_vehiculos.detalle, COALESCE(SUM(IFNULL(cobros.valor, 0)), 0) AS suma_total')
             ->get();
 
+        $sumaTotalPorUsuario = DB::table('tipo_vehiculos')
+            ->leftJoin('vehiculos', 'tipo_vehiculos.id', '=', 'vehiculos.idTipoVehiculo')
+            ->leftJoin('cobros', 'cobros.idVehiculo', '=', 'vehiculos.id')
+            ->leftJoin('users', 'cobros.idUsuario', '=', 'users.id')
+            ->leftJoin('personas', 'users.persona_id', '=', 'personas.id')
+            ->whereBetween('cobros.fecha', [$fechaInicio, $fechaFin])
+            ->groupBy('users.id', 'personas.nombres', 'personas.apellidos')
+            ->selectRaw('users.id, CONCAT(personas.nombres, " ", personas.apellidos) AS usuario, COALESCE(SUM(IFNULL(cobros.valor, 0)), 0) AS suma_total')
+            ->get();
+
+
         $status = $sumaTotalPorTipo->contains('suma_total', '>', 0);
 
+        $data = [
+            'sumaTotalPorTipo' => $sumaTotalPorTipo,
+            'sumaTotalPorUsuario' => $sumaTotalPorUsuario,
+        ];
+        
         return response()->json([
             'status' => $status,
-            'data' => $sumaTotalPorTipo,
+            'data' => $data,
         ]);
     }
 
 
     public function historialPorFechas($fechaInicio, $fechaFin)
     {
-        $informacion = DB::table('cobros')
+        $informacionDetallada = DB::table('cobros')
             ->join('vehiculos', 'cobros.idVehiculo', '=', 'vehiculos.id')
             ->join('tipo_vehiculos', 'vehiculos.idTipoVehiculo', '=', 'tipo_vehiculos.id')
             ->join('users', 'cobros.idUsuario', '=', 'users.id')
@@ -99,6 +115,23 @@ class CobroController extends Controller
             ->orderBy('cobros.id')
             ->get();
 
-        return $informacion;
+        $informacionResumida = DB::table('turnos')
+            ->join('users', 'turnos.user_id', '=', 'users.id')
+            ->select(
+                'turnos.id',
+                'users.name AS usuario',
+                'turnos.inicio',
+                'turnos.fin',
+                'turnos.recaudado',
+                'turnos.observacion'
+            )
+            ->whereBetween('turnos.inicio', [$fechaInicio, $fechaFin])
+            ->orderBy('turnos.id')
+            ->get();
+
+        return [
+            'informacionDetallada' => $informacionDetallada,
+            'informacionResumida' => $informacionResumida,
+        ];
     }
 }

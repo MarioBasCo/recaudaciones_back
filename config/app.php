@@ -70,8 +70,8 @@ return [
     |
     */
 
-    'timezone' => 'UTC',
-
+    //'timezone' => 'UTC',
+    'timezone' => 'UTC-5',
     /*
     |--------------------------------------------------------------------------
     | Application Locale Configuration
