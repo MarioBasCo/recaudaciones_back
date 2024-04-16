@@ -13,18 +13,13 @@ return new class extends Migration
     {
         Schema::create('cobros', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('idUsuario');
-            $table->unsignedBigInteger('idVehiculo');
-            //$table->unsignedBigInteger('idTipoVehiculo');
+            $table->foreignId('idUsuario')->constrained('users');
+            $table->foreignId('idVehiculo')->constrained('vehiculos');
             $table->integer('ticket_number');
             $table->decimal('valor', 9, 2)->default(0);
             $table->date('fecha')->nullable();
             $table->time('hora')->nullable();
             $table->timestamps();
-
-            $table->foreign('idUsuario')->references('id')->on('users')->onDelete('no action');
-            $table->foreign('idVehiculo')->references('id')->on('Vehiculos')->onDelete('no action');
-            //$table->foreign('idTipoVehiculo')->references('id')->on('tipo_vehiculos')->onDelete('no action');
         });
     }
 
